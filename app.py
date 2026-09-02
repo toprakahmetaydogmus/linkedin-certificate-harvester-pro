@@ -1,8 +1,12 @@
 """
 ====================================================================================================
-🏆 LINKEDIN CERTIFICATE HARVESTER & REPO PORTFOLIO ARCHITECT PRO v18.0 🏆
+🏆 LINKEDIN CERTIFICATE HARVESTER & REPO PORTFOLIO ARCHITECT PRO v19.0 🏆
 ====================================================================================================
 Universal, High-DPI CustomTkinter Suite:
+  - 🛡️ Tkinter / CustomTkinter TclError Bulletproofing:
+      * Safe monkey-patches for CTkBaseClass._update_dimensions_event and _draw.
+      * Isolated card container architecture (eliminates scroll canvas destruction bugs).
+      * Thread-safe UI dispatchers (self.after).
   - 🚀 Bulletproof Dynamic Infinite Scroller:
       * 1.5s human-paced wait time ensuring 100% lazy-loaded media rendering.
       * Multi-pass scroll (downward progressive + upward trigger pass).
@@ -41,6 +45,27 @@ from tkinter import filedialog, messagebox, ttk
 
 try:
     import customtkinter as ctk
+    from customtkinter.windows.widgets.core_widget_classes.ctk_base_class import CTkBaseClass
+    
+    # ----------------------------------------------------------------------------------------------
+    # 🛡️ CUSTOMTKINTER TCL ERROR IMMUNITY PATCH
+    # Prevents transient _tkinter.TclError when widgets are being destroyed or redrawn in Python 3.14
+    # ----------------------------------------------------------------------------------------------
+    orig_update_dim = CTkBaseClass._update_dimensions_event
+    def safe_update_dimensions_event(self, event=None):
+        try:
+            return orig_update_dim(self, event)
+        except (tk.TclError, Exception):
+            pass
+    CTkBaseClass._update_dimensions_event = safe_update_dimensions_event
+
+    orig_draw = CTkBaseClass._draw
+    def safe_draw(self, *args, **kwargs):
+        try:
+            return orig_draw(self, *args, **kwargs)
+        except (tk.TclError, Exception):
+            pass
+    CTkBaseClass._draw = safe_draw
 except ImportError:
     import tkinter as ctk
 
@@ -129,7 +154,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
     def __init__(self):
         super().__init__()
         
-        self.title("🏆 LinkedIn Certificate Harvester & GitHub Portfolio Architect Pro v18.0")
+        self.title("🏆 LinkedIn Certificate Harvester & GitHub Portfolio Architect Pro v19.0")
         self.geometry("1440x920")
         self.minsize(1150, 720)
         if hasattr(self, 'configure'):
@@ -157,7 +182,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         self.build_main_container()
         
         # Initial Logs
-        self.log("SUCCESS", "LinkedIn Certificate Harvester Pro v18.0 başlatıldı.")
+        self.log("SUCCESS", "LinkedIn Certificate Harvester Pro v19.0 hazır (TclError Korumalı).")
         if self.certificates:
             self.log("INFO", f"Mevcut Yüklü Sertifika Sayısı: {len(self.certificates)}")
         if self.has_git:
@@ -313,10 +338,10 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
 
     def show_harvester_tab(self): self.switch_tab("harvester")
     def show_certs_tab(self): 
-        self.render_certificate_cards()
+        self.after(0, self.render_certificate_cards)
         self.switch_tab("certs")
     def show_readme_tab(self): 
-        self.generate_and_preview_readme()
+        self.after(0, self.generate_and_preview_readme)
         self.switch_tab("readme")
     def show_github_tab(self): self.switch_tab("github")
     def show_settings_tab(self): self.switch_tab("settings")
@@ -351,7 +376,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         )
         self.btn_launch_browser.grid(row=0, column=2, padx=10, pady=10)
         
-        # Step 2 Live Dynamic Scrape Banner (Paced & Full-Depth)
+        # Step 2 Live Dynamic Scrape Banner (1.5s human paced)
         self.banner_interactive = ctk.CTkFrame(frame, fg_color="#102A24", corner_radius=10, border_width=1, border_color=THEME["accent_green"])
         self.banner_interactive.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 8))
         self.banner_interactive.grid_columnconfigure(0, weight=1)
@@ -423,7 +448,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         # Live Console Output
         self.harvest_output = ctk.CTkTextbox(frame, font=("Consolas", 11), fg_color=THEME["bg_dark"])
         self.harvest_output.grid(row=4, column=0, sticky="nsew", padx=12, pady=(0, 10))
-        self.harvest_output.insert("1.0", f"🏆 LinkedIn Certificate Harvester & Portfolio Architect v18.0\n\n"
+        self.harvest_output.insert("1.0", f"🏆 LinkedIn Certificate Harvester & Portfolio Architect v19.0\n\n"
                                           f"✅ Yüklü Sertifika Sayısı: {len(self.certificates)}\n\n"
                                           f"Nasıl Kullanılır:\n"
                                           f"1. '1. Tarayıcıyı Aç' diyerek LinkedIn hesabınızla sertifikalar sayfanıza gelin.\n"
@@ -434,8 +459,10 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         return frame
 
     def append_output(self, text):
-        self.harvest_output.insert("end", text)
-        self.harvest_output.see("end")
+        def do_append():
+            self.harvest_output.insert("end", text)
+            self.harvest_output.see("end")
+        self.after(0, do_append)
 
     # ----------------------------------------------------------------------------------------------
     # 🚀 BULLETPROOF DYNAMIC PLAYWRIGHT ENGINE (1.5S PACED)
@@ -451,7 +478,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         
         def run_thread():
             self.log("INFO", f"Tarayıcı açılıyor: {url}...")
-            self.harvest_output.delete("1.0", "end")
+            self.after(0, lambda: self.harvest_output.delete("1.0", "end"))
             self.append_output(f"🚀 Google Chrome açılıyor...\nHedef: {url}\n\n"
                                f"👉 Sertifikalar sayfanız ekrandayken yukarıdaki '2. TÜM SERTİFİKALARI EKSİKSİZ ÇEK' butonuna basın!\n\n")
             
@@ -671,11 +698,13 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         if extracted:
             self.certificates = extracted
             self.save_certificates_data()
-            self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
-            self.nav_buttons["certs"].configure(text=f"📜 Sertifikalar ({len(self.certificates)})")
-            self.log("SUCCESS", f"Toplam {len(extracted)} sertifikanın tümü başarıyla emildi!")
-            self.show_certs_tab()
-            messagebox.showinfo("Tamamlandı", f"Profilinizden toplam {len(extracted)} adet sertifikanın tamamı eksiksiz çekildi!")
+            def finish_ui():
+                self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
+                self.nav_buttons["certs"].configure(text=f"📜 Sertifikalar ({len(self.certificates)})")
+                self.log("SUCCESS", f"Toplam {len(extracted)} sertifikanın tümü başarıyla emildi!")
+                self.show_certs_tab()
+                messagebox.showinfo("Tamamlandı", f"Profilinizden toplam {len(extracted)} adet sertifikanın tamamı eksiksiz çekildi!")
+            self.after(0, finish_ui)
 
     # ----------------------------------------------------------------------------------------------
     # 📂 UNIVERSAL OFFLINE HTML IMPORT
@@ -691,7 +720,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         files_dir = target_html.replace(".html", "_files").replace(".htm", "_files")
         
         def run_thread():
-            self.harvest_output.delete("1.0", "end")
+            self.after(0, lambda: self.harvest_output.delete("1.0", "end"))
             self.append_output(f"🔍 HTML Dosyası İnceleniyor: {target_html}\n")
             
             with open(target_html, "r", encoding="utf-8", errors="ignore") as f:
@@ -767,10 +796,12 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
             if extracted:
                 self.certificates = extracted
                 self.save_certificates_data()
-                self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
-                self.nav_buttons["certs"].configure(text=f"📜 Sertifikalar ({len(self.certificates)})")
-                self.show_certs_tab()
-                messagebox.showinfo("Başarılı", f"HTML dosyasından {len(extracted)} adet sertifika başarıyla aktarıldı!")
+                def finish_html_import():
+                    self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
+                    self.nav_buttons["certs"].configure(text=f"📜 Sertifikalar ({len(self.certificates)})")
+                    self.show_certs_tab()
+                    messagebox.showinfo("Başarılı", f"HTML dosyasından {len(extracted)} adet sertifika başarıyla aktarıldı!")
+                self.after(0, finish_html_import)
                 
         threading.Thread(target=run_thread, daemon=True).start()
 
@@ -882,10 +913,12 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
                 count += 1
                 
             self.save_certificates_data()
-            self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
-            self.nav_buttons["certs"].configure(text=f"📜 Sertifikalar ({len(self.certificates)})")
-            messagebox.showinfo("İçe Aktarıldı", f"{count} adet sertifika başarıyla eklendi!")
-            self.show_certs_tab()
+            def finish_import():
+                self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
+                self.nav_buttons["certs"].configure(text=f"📜 Sertifikalar ({len(self.certificates)})")
+                messagebox.showinfo("İçe Aktarıldı", f"{count} adet sertifika başarıyla eklendi!")
+                self.show_certs_tab()
+            self.after(0, finish_import)
             
         threading.Thread(target=run_thread, daemon=True).start()
 
@@ -936,7 +969,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         ctk.CTkButton(modal, text="💾 Kaydet", height=36, fg_color=THEME["accent_green"], text_color="#000", command=save).pack(pady=20)
 
     # ----------------------------------------------------------------------------------------------
-    # 📜 TAB 2: CERTIFICATES & OCR TABLE VIEW
+    # 📜 TAB 2: CERTIFICATES & OCR TABLE VIEW (ISOLATED CONTAINER ARCHITECTURE)
     # ----------------------------------------------------------------------------------------------
     def create_certs_view(self):
         frame = ctk.CTkFrame(self.main_container, fg_color=THEME["bg_card"], corner_radius=12)
@@ -959,21 +992,37 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         )
         btn_clear_all.pack(side="right", padx=10, pady=10)
         
+        # Scrollable frame container
         self.scroll_certs = ctk.CTkScrollableFrame(frame, fg_color="transparent")
         self.scroll_certs.grid(row=1, column=0, sticky="nsew", padx=10, pady=6)
         self.scroll_certs.grid_columnconfigure(0, weight=1)
+        
+        # Dedicated sub-container for cards: destroying this leaves scroll_certs internals 100% intact!
+        self.cards_container = ctk.CTkFrame(self.scroll_certs, fg_color="transparent")
+        self.cards_container.pack(fill="both", expand=True)
+        self.cards_container.grid_columnconfigure(0, weight=1)
         
         self.render_certificate_cards()
         return frame
 
     def render_certificate_cards(self):
-        for w in self.scroll_certs.winfo_children(): w.destroy()
+        # Safely reset only the inner container
+        if hasattr(self, 'cards_container') and self.cards_container.winfo_exists():
+            try:
+                self.cards_container.destroy()
+            except Exception:
+                pass
+                
+        self.cards_container = ctk.CTkFrame(self.scroll_certs, fg_color="transparent")
+        self.cards_container.pack(fill="both", expand=True)
+        self.cards_container.grid_columnconfigure(0, weight=1)
+        
         if hasattr(self, 'lbl_certs_header'):
             self.lbl_certs_header.configure(text=f"📜 Sertifikalar & Başarılar (Toplam: {len(self.certificates)})")
         
         if not self.certificates:
             lbl_empty = ctk.CTkLabel(
-                self.scroll_certs,
+                self.cards_container,
                 text="Henüz kayıtlı sertifika bulunmamaktadır.\n'🌐 LinkedIn AI Harvester' sekmesinden profilinizi tarayabilirsiniz.",
                 font=ctk.CTkFont(size=13),
                 text_color=THEME["text_muted"]
@@ -982,7 +1031,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
             return
             
         for idx, cert in enumerate(self.certificates):
-            card = ctk.CTkFrame(self.scroll_certs, fg_color=THEME["bg_card_secondary"], corner_radius=10)
+            card = ctk.CTkFrame(self.cards_container, fg_color=THEME["bg_card_secondary"], corner_radius=10)
             card.pack(fill="x", pady=6, padx=4)
             card.grid_columnconfigure(0, weight=1)
             
@@ -992,15 +1041,17 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
             lbl_t = ctk.CTkLabel(top_bar, text=f"[{idx+1}] {cert.get('title', 'Sertifika')}", font=ctk.CTkFont(size=13, weight="bold"), text_color=THEME["text_primary"])
             lbl_t.pack(side="left")
             
+            # Badge frame (No direct corner_radius on label, prevents draw engine border crash)
+            badge_frame = ctk.CTkFrame(top_bar, fg_color=cert.get("badge_color", "#00E676"), corner_radius=6, height=22)
+            badge_frame.pack(side="right")
             lbl_badge = ctk.CTkLabel(
-                top_bar,
+                badge_frame,
                 text=f"  {cert.get('badge', 'VERIFIED CREDENTIAL')}  ",
                 font=ctk.CTkFont(size=10, weight="bold"),
-                fg_color=cert.get("badge_color", "#00E676"),
-                text_color="#000",
-                corner_radius=6
+                fg_color="transparent",
+                text_color="#000"
             )
-            lbl_badge.pack(side="right")
+            lbl_badge.pack(padx=4, pady=2)
             
             meta_str = f"🏛️ Kurum: {cert.get('issuer', '-')} | 📅 {cert.get('date', '-')}"
             if cert.get('cred_id'):
@@ -2005,8 +2056,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         prefix = {"INFO": "ℹ️ [INFO]", "SUCCESS": "✅ [SUCCESS]", "WARN": "⚠️ [WARN]", "ERROR": "❌ [ERROR]"}.get(level, f"[{level}]")
         line = f"[{timestamp}] {prefix} {message}\n"
         if hasattr(self, 'console_box'):
-            self.console_box.insert("end", line)
-            self.console_box.see("end")
+            self.after(0, lambda l=line: (self.console_box.insert("end", l), self.console_box.see("end")))
         else:
             print(line, end="")
 
