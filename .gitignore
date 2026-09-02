@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches and local data
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# User-specific & local private configs
+user_config.json
+config.json
+certificates_data.json
+.roblox_master_suite/
+.linkedin_cert_architect/
+
+# Output exports
+LinkedIn_Portfolio_Export/
+assets/certificates/*.png
+assets/certificates/*.jpg
