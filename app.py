@@ -1,13 +1,13 @@
 """
 ====================================================================================================
-🏆 LINKEDIN CERTIFICATE HARVESTER & REPO PORTFOLIO ARCHITECT PRO v13.0 🏆
+🏆 LINKEDIN CERTIFICATE HARVESTER & REPO PORTFOLIO ARCHITECT PRO v14.0 🏆
 ====================================================================================================
 Universal High-DPI CustomTkinter Suite:
-  - 🌐 Lightning-Fast DOM Extraction (0s Timeout, JavaScript Evaluator Engine)
-  - 🚀 Two-Step Interactive Chrome Session with Live Progress Stream
-  - 📸 High-Resolution Certificate Card Screen Capture & OCR Processing
-  - 👁️ Tesseract OCR Vision Engine (Multi-pass contrast & text extraction)
-  - 🎨 Ultra-Luxury Multi-Theme GitHub README & Portfolio Architect
+  - 📜 Smooth & Slow Page Scrolling (Forces full lazy-loading of all certificates and badges)
+  - 🔍 Semantic Card Finder: Matches cards by keywords ('tarihinde verildi', 'Issued', 'Yeterlilik')
+  - 📸 Interactive Thumbnail Clicker: Clicks certificate document previews to capture full-res modals!
+  - 👁️ OCR Vision Engine (Tesseract + PIL Image Enhancement & Text Extraction)
+  - 🎨 Ultra-Luxury Multi-Theme GitHub README & Portfolio Architect (Tokyo Night, Glass, Cyber)
   - 🐙 Universal Portable GitHub Auto-Pusher (Git CLI + Winget Auto-Installer + Pure REST API)
   - 🛡️ Zero-Hardcoding: User-agnostic, privacy-first, dynamic credential storage
 ====================================================================================================
@@ -122,7 +122,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
     def __init__(self):
         super().__init__()
         
-        self.title("🏆 LinkedIn Certificate Harvester & GitHub Portfolio Architect Pro v13.0")
+        self.title("🏆 LinkedIn Certificate Harvester & GitHub Portfolio Architect Pro v14.0")
         self.geometry("1440x920")
         self.minsize(1150, 720)
         if hasattr(self, 'configure'):
@@ -353,7 +353,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         
         self.lbl_interactive_status = ctk.CTkLabel(
             self.banner_interactive,
-            text="👉 Chrome açıldığında giriş yapın ve sertifikalar sayfanıza gelin. Hazır olduğunuzda butona basın:",
+            text="👉 Chrome açıldığında sertifikalar sayfanız ekrandayken butona basın. Sayfa yavaşça taranacak ve fotoğraflar çekilecektir:",
             font=ctk.CTkFont(size=12, weight="bold"),
             text_color=THEME["accent_cyan"]
         )
@@ -406,35 +406,35 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         # Output Live View
         self.harvest_output = ctk.CTkTextbox(frame, font=("Consolas", 11), fg_color=THEME["bg_dark"])
         self.harvest_output.grid(row=3, column=0, sticky="nsew", padx=12, pady=(0, 10))
-        self.harvest_output.insert("1.0", "🏆 LinkedIn AI Harvester v13.0 Hazır!\n\n"
+        self.harvest_output.insert("1.0", "🏆 LinkedIn AI Harvester v14.0 Hazır!\n\n"
                                           "Nasıl Kullanılır:\n"
-                                          "1. '1. Tarayıcıyı Aç' butonuna basın. (Oturumunuz kalıcı olarak açılır)\n"
-                                          "2. Açılan pencerede sertifikalar sayfanız ekrandayken yukarıdaki yeşil '2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK' butonuna basın!\n\n"
-                                          "Sistem ekrandaki tüm sertifikaları anında algılayacak, ekran görüntülerini alacak, Tesseract OCR ile okuyacak ve README.md oluşturacaktır.")
+                                          "1. '1. Tarayıcıyı Aç' butonuna basın.\n"
+                                          "2. Sertifikalar sayfanız ekrandayken '2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK' butonuna basın!\n\n"
+                                          "Sistem sayfayı yavaşça aşağı kaydıracak, her sertifikanın belgesine/fotoğrafına tıklayarak yüksek çözünürlüklü görselini alacak ve Tesseract OCR ile okuyacaktır.")
         
         return frame
 
-    # ----------------------------------------------------------------------------------------------
-    # 🚀 INTERACTIVE BROWSER SCRAPING FLOW
-    # ----------------------------------------------------------------------------------------------
     def append_output(self, text):
         self.harvest_output.insert("end", text)
         self.harvest_output.see("end")
 
+    # ----------------------------------------------------------------------------------------------
+    # 🚀 INTERACTIVE BROWSER LIFECYCLE
+    # ----------------------------------------------------------------------------------------------
     def start_interactive_browser(self):
         url = self.entry_linkedin_url.get().strip()
         if not url.startswith("http"):
-            messagebox.showerror("Hata", "Lütfen geçerli bir LinkedIn Profil URL'si giriniz.")
+            messagebox.showerror("Hata", "Lütfen geçerli bir LinkedIn URL'si giriniz.")
             return
             
         self.user_config["linkedin_url"] = url
         self.save_config()
         
         def run_thread():
-            self.log("INFO", f"Tarayıcı oturumu başlatılıyor: {url}...")
+            self.log("INFO", f"Tarayıcı açılıyor: {url}...")
             self.harvest_output.delete("1.0", "end")
             self.append_output(f"🚀 Google Chrome açılıyor...\nHedef: {url}\n\n"
-                               f"👉 Tarayıcıda sertifikalar sayfanız açık olduğunda yukarıdaki yeşil '2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK' butonuna tıklayın!\n\n")
+                               f"👉 Sertifikalar sayfanız ekranda olduğunda yukarıdaki '2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK' butonuna tıklayın!\n\n")
             
             try:
                 self.event_loop = asyncio.new_event_loop()
@@ -470,17 +470,16 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
             except Exception:
                 pass
                 
-            self.append_output("🟢 Tarayıcı ekranda hazır! Sertifikalarınız görünüyorsa '2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK' butonuna basın.\n")
+            self.append_output("🟢 Tarayıcı hazır! Sayfadayken '2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK' butonuna basın.\n")
             
-            # Keep waiting for user to click the button
+            # Wait for user to trigger scrape
             while True:
                 if len(context.pages) == 0:
                     self.append_output("⚠️ Tarayıcı penceresi kapatıldı.\n")
                     break
-                # Check if scrape event triggered
                 if self.scrape_event and self.scrape_event.is_set():
                     self.scrape_event.clear()
-                    await self.async_extract_cards_instantly(page, profile_url)
+                    await self.async_extract_and_click_photos(page, profile_url)
                     break
                 await asyncio.sleep(0.3)
                 
@@ -489,120 +488,163 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
 
     def trigger_scrape_now(self):
         if self.active_page is not None and self.scrape_event is not None and self.event_loop is not None:
-            self.append_output("\n⚡ 'Şimdi Çek' tetiklendi! Kartlar taranıyor...\n")
+            self.append_output("\n⚡ 'Şimdi Çek' tetiklendi! Sayfa taranıyor...\n")
             self.event_loop.call_soon_threadsafe(self.scrape_event.set)
         else:
             self.start_interactive_browser()
 
     # ----------------------------------------------------------------------------------------------
-    # ⚡ LIGHTNING-FAST CARD EXTRACTION & OCR
+    # ⚡ DEEP SCRAPING: SLOW SCROLL & CLICK CERTIFICATE PHOTOS
     # ----------------------------------------------------------------------------------------------
-    async def async_extract_cards_instantly(self, page, profile_url):
-        self.append_output(f"\n🔍 Aktif sayfa inceleniyor: {page.url}\n")
+    async def async_extract_and_click_photos(self, page, profile_url):
+        self.append_output(f"🔍 Aktif sayfa: {page.url}\n")
         
-        # Fast profile info extraction via JavaScript (Zero timeouts)
-        profile_meta = await page.evaluate("""() => {
-            let name = document.querySelector('h1')?.innerText?.trim() || '';
-            let headline = document.querySelector('div.text-body-medium')?.innerText?.trim() || '';
-            return { name, headline };
-        }""")
-        
-        name = profile_meta.get("name") or self.user_config.get("profile_name", "Toprak Ahmet Aydoğmuş")
-        headline = profile_meta.get("headline") or self.user_config.get("profile_headline", "Cybersecurity Specialist")
-        
-        if "Katılın" not in name and "Giriş" not in name and len(name) > 2:
-            self.user_config["profile_name"] = name
-        if len(headline) > 3:
-            self.user_config["profile_headline"] = headline
-        self.save_config()
-        
-        self.append_output(f"👤 İsim: {self.user_config['profile_name']}\n💼 Başlık: {self.user_config['profile_headline']}\n\n")
-        
-        # Scroll down smoothly to render all lazy-loaded badge images and cards
-        self.append_output("📜 Sayfa aşağı taranıyor (Görseller yükleniyor)...\n")
-        for _ in range(5):
-            await page.keyboard.press("PageDown")
+        # 1. Slow, Smooth Scrolling Down to trigger all lazy-loaded elements
+        self.append_output("📜 Sayfa yavaşça aşağı kaydırılıyor (Görseller ve sertifikalar açılıyor)...\n")
+        for step in range(12):
+            await page.evaluate("window.scrollBy({ top: 380, behavior: 'smooth' })")
             await asyncio.sleep(0.8)
-        await page.keyboard.press("Home")
-        await asyncio.sleep(0.8)
-        
-        # Deep DOM extraction via JavaScript (Zero locators timeout, 0.05 seconds)
-        raw_cards = await page.evaluate("""() => {
-            const selectors = [
-                'main ul.pvs-list > li',
-                'div.scaffold-finite-scroll__content ul > li',
-                'li.pvs-list__paged-list-item',
-                'li.artdeco-list__item',
-                'section[id*="certifications"] li'
-            ];
             
-            let elements = [];
-            for (const sel of selectors) {
-                const found = Array.from(document.querySelectorAll(sel));
-                if (found.length >= 1) {
-                    elements = found;
-                    break;
+        await page.evaluate("window.scrollTo({ top: 0, behavior: 'smooth' })")
+        await asyncio.sleep(1.0)
+        
+        # 2. Semantic Card Identification in DOM (Independent of CSS class names!)
+        self.append_output("🔍 Sertifika kartları aranıyor...\n")
+        raw_cards = await page.evaluate("""() => {
+            const results = [];
+            
+            // Look for any list items (li) or divs that contain certificate markers
+            const allElements = Array.from(document.querySelectorAll('li, div.pvs-entity, div[data-view-name*="entity"]'));
+            
+            for (let i = 0; i < allElements.length; i++) {
+                const el = allElements[i];
+                const text = el.innerText || '';
+                
+                // Match criteria: contains date or credential or skills or certificate terms
+                const isCert = text.includes('tarihinde verildi') || 
+                               text.includes('Issued') || 
+                               text.includes('Yeterlilik') || 
+                               text.includes('Credential') ||
+                               text.includes('Yetenekler:') || 
+                               text.includes('Skills:');
+                               
+                if (isCert) {
+                    // Make sure this is a leaf card (doesn't contain other full certificate cards)
+                    const subMatches = el.querySelectorAll('li');
+                    let isParent = false;
+                    for (const sub of subMatches) {
+                        const subText = sub.innerText || '';
+                        if (subText.includes('tarihinde verildi') || subText.includes('Issued')) {
+                            isParent = true;
+                            break;
+                        }
+                    }
+                    if (isParent) continue;
+                    
+                    // Extract text spans
+                    const spans = Array.from(el.querySelectorAll('span[aria-hidden="true"]'))
+                        .map(s => s.innerText.trim())
+                        .filter(t => t.length > 0);
+                        
+                    // Check if there is a document preview image/thumbnail
+                    const thumbImg = el.querySelector('img[alt*="Sertifika"], img[alt*="Certificate"], img[alt*="Analyst"], img[alt*="Mühendisliği"], div[class*="thumbnail"] img, div[class*="media"] img, a[href*="media"] img');
+                    const hasThumb = thumbImg !== null;
+                    const thumbSrc = thumbImg ? thumbImg.src : '';
+                    
+                    // Fallback to first line as title
+                    const lines = text.split('\\n').map(l => l.trim()).filter(l => l.length > 2);
+                    const title = spans.length > 0 ? spans[0] : (lines.length > 0 ? lines[0] : 'Sertifika');
+                    
+                    results.push({
+                        index: i,
+                        title: title,
+                        spans: spans.length > 0 ? spans : lines,
+                        hasThumb: hasThumb,
+                        thumbSrc: thumbSrc,
+                        fullText: text
+                    });
                 }
             }
             
-            return elements.map((el, i) => {
-                const spans = Array.from(el.querySelectorAll('span[aria-hidden="true"]'))
-                    .map(s => s.innerText.trim())
-                    .filter(t => t.length > 0);
-                    
-                const img = el.querySelector('img')?.src || '';
-                const link = el.querySelector('a[href*="credential"], a[target="_blank"]')?.href || '';
-                
-                return {
-                    index: i,
-                    spans: spans,
-                    imgUrl: img,
-                    linkUrl: link,
-                    fullText: el.innerText
-                };
-            }).filter(item => item.spans.length > 0);
+            // Deduplicate by title
+            const unique = [];
+            const seen = new Set();
+            for (const r of results) {
+                if (!seen.has(r.title) && r.title.length > 2 && !r.title.includes('Lisanslar ve sertifikalar')) {
+                    seen.add(r.title);
+                    unique.push(r);
+                }
+            }
+            return unique;
         }""")
         
-        self.append_output(f"📌 Tespit edilen sertifika kartı sayısı: {len(raw_cards)}\n\n")
+        self.append_output(f"📌 Tespit edilen sertifika sayısı: {len(raw_cards)}\n\n")
         
         if not raw_cards:
-            self.append_output("⚠️ Ekranda sertifika kartı bulunamadı. Lütfen '/details/certifications/' sayfasında olduğunuzdan emin olun.\n")
+            self.append_output("⚠️ Ekranda sertifika kartı bulunamadı.\n")
             messagebox.showwarning("Bulunamadı", "Sertifikalar sayfasında olduğunuzdan emin olun.")
             return
             
         extracted_certs = []
-        locators = page.locator("main ul.pvs-list > li, li.pvs-list__paged-list-item, div.scaffold-finite-scroll__content ul > li")
         
         for idx, item in enumerate(raw_cards):
+            title = item["title"]
             spans = item["spans"]
-            title = spans[0]
-            
-            # Filter non-cert UI elements
-            if any(b in title.lower() for b in ["ana sayfa", "mesajlar", "bildirimler", "iş ilanları", "premium", "kaydol", "oturum"]):
-                continue
-                
             issuer = spans[1] if len(spans) > 1 else "Doğrulanmış Kurum"
             
-            # Find date in spans
+            # Find date
             date_str = datetime.now().strftime("%Y")
             for s in spans[1:]:
                 if any(m in s for m in ["verildi", "Issued", "202", "201", "200"]):
                     date_str = s
                     break
                     
-            # Capture Card Screenshot
             img_filename = f"linkedin_cert_{int(time.time())}_{idx+1}.png"
             img_path = os.path.join(CERT_IMG_DIR, img_filename)
             
+            # 3. Locate the card on page by exact title
             try:
-                card_loc = locators.nth(item["index"])
-                await card_loc.scroll_into_view_if_needed()
-                await asyncio.sleep(0.3)
-                await card_loc.screenshot(path=img_path)
-            except Exception:
-                img_path = ""
+                card_locator = page.locator(f"li:has-text('{title}'), div:has-text('{title}')").first
+                await card_locator.scroll_into_view_if_needed()
+                await asyncio.sleep(0.4)
                 
-            # OCR Processing
+                # Check if there is a document preview photo/thumbnail to click!
+                thumb_locator = card_locator.locator("img[alt*='Sertifika'], img[alt*='Certificate'], img[alt*='Analyst'], img[alt*='Mühendisliği'], div[class*='thumbnail'] img, div[class*='media'] img, a[href*='media'] img, div.display-flex.flex-row img").first
+                
+                photo_clicked = False
+                if await thumb_locator.count() > 0:
+                    try:
+                        self.append_output(f"  🖼️ [{idx+1}] '{title}' sertifika fotoğrafı tıklanıyor...\n")
+                        await thumb_locator.click(timeout=3000)
+                        await asyncio.sleep(1.2)
+                        
+                        # Check if a modal/lightbox opened
+                        modal_loc = page.locator("div[role='dialog'], div.artdeco-modal, div.media-viewer").first
+                        if await modal_loc.count() > 0:
+                            # Screenshot the full modal certificate image!
+                            await modal_loc.screenshot(path=img_path)
+                            photo_clicked = True
+                            self.append_output(f"    ✨ Tam ekran sertifika görseli yakalandı!\n")
+                            # Close the modal
+                            await page.keyboard.press("Escape")
+                            await asyncio.sleep(0.5)
+                            # If still open, click close button
+                            close_btn = page.locator("button[aria-label*='Dismiss'], button[aria-label*='Kapat'], button[data-test-modal-close-btn]").first
+                            if await close_btn.count() > 0:
+                                await close_btn.click()
+                                await asyncio.sleep(0.4)
+                    except Exception:
+                        await page.keyboard.press("Escape")
+                        
+                if not photo_clicked:
+                    # Fallback to screenshotting the entire card cleanly
+                    await card_locator.screenshot(path=img_path)
+                    self.append_output(f"  📸 [{idx+1}] Kart görseli alındı: {title}\n")
+            except Exception as e:
+                img_path = ""
+                self.append_output(f"  ⚠️ [{idx+1}] Görsel alma uyarısı: {str(e)}\n")
+                
+            # 4. Run Tesseract OCR
             ocr_text = ""
             if img_path and os.path.exists(img_path) and pytesseract:
                 try:
@@ -626,17 +668,17 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
                 "desc": ocr_text[:250].replace("\n", " ") if ocr_text else f"{issuer} tarafından verildi."
             }
             extracted_certs.append(cert_obj)
-            self.append_output(f"  ✅ [{idx+1}] {title} | {issuer} ({date_str})\n")
+            self.append_output(f"    ✅ Başarılı: {title} | {issuer} ({date_str})\n")
             
         if extracted_certs:
-            self.certificates = extracted_certs # Replace with fresh harvested certificates
+            self.certificates = extracted_certs
             self.save_certificates_data()
             self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
             self.log("SUCCESS", f"{len(extracted_certs)} adet sertifika başarıyla emildi!")
-            self.append_output(f"\n🎉 BAŞARILI! {len(extracted_certs)} adet sertifika kaydedildi ve OCR yapıldı!\n"
-                               f"Otomatik olarak '📜 Sertifikalar & OCR Tablosu' sekmesine yönlendiriliyorsunuz...\n")
+            self.append_output(f"\n🎉 HARİKA! {len(extracted_certs)} adet sertifika fotoğrafı çekildi, OCR yapıldı ve kaydedildi!\n"
+                               f"Şimdi '📜 Sertifikalar & OCR Tablosu' sekmesine geçebilirsiniz.\n")
             self.show_certs_tab()
-            messagebox.showinfo("Başarılı", f"{len(extracted_certs)} adet sertifika başarıyla çekildi ve arşivlendi!")
+            messagebox.showinfo("Başarılı", f"{len(extracted_certs)} adet sertifika fotoğrafı başarıyla çekildi ve OCR ile işlendi!")
 
     # ----------------------------------------------------------------------------------------------
     # 📄 DIRECT HTML PASTE MODAL
