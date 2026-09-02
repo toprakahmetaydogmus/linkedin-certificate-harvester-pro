@@ -3,6 +3,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# PyInstaller build artifacts
+build/
+dist/
+*.spec
+
+# Local Windows executables
+*.exe
+
 # Caches and local data
 .pytest_cache/
 .coverage
@@ -16,12 +24,15 @@ env/
 venv/
 ENV/
 
-# User-specific & local private configs
+# User-specific & local private configs (ZERO LEAK GUARANTEE)
 user_config.json
 config.json
 certificates_data.json
 .roblox_master_suite/
 .linkedin_cert_architect/
+chrome_user_session/
+*.cookie*
+live_portfolio.html
 
 # Output exports
 LinkedIn_Portfolio_Export/
