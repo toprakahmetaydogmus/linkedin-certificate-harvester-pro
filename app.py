@@ -1,15 +1,15 @@
 """
 ====================================================================================================
-🏆 LINKEDIN CERTIFICATE HARVESTER & REPO PORTFOLIO ARCHITECT PRO v12.0 🏆
+🏆 LINKEDIN CERTIFICATE HARVESTER & REPO PORTFOLIO ARCHITECT PRO v12.5 🏆
 ====================================================================================================
 Universal High-DPI CustomTkinter Suite:
-  - 🌐 Persistent Google Chrome & Playwright Session (Zero Authwall / Remembers User Login)
-  - 🔗 Direct Chrome DevTools Connection (Port 9222) to Active Logged-in Browser
-  - 📄 Direct LinkedIn HTML Source Parser (1-Click Instant Extraction without Bot Detection)
+  - 🌐 Unified Smart Playwright & Chrome Engine (Auto-Detects Login, Interactive 'Şimdi Çek' Button)
+  - 🔗 CDP Port 9222 Direct Connection to Already-Running Chrome
+  - 📄 Instant HTML / Clipboard Parser (0-Second Extraction)
   - 📸 High-Resolution Certificate Card Capture & Asset Management
   - 👁️ OCR Vision Engine (Tesseract + PIL Image Enhancement & Text Extraction)
-  - 📂 Local Certificate PDF/Image Importer & Auto-Parser
-  - 🎨 Multi-Theme GitHub README & Portfolio Architect (Tokyo Night, Glass, Cyber)
+  - 📂 Local Certificate PDF/Image Batch Importer
+  - 🎨 Ultra-Luxury Multi-Theme GitHub README & Portfolio Architect (Tokyo Night, Glass, Cyber)
   - 🐙 Universal Portable GitHub Auto-Pusher (Git CLI + Winget Auto-Installer + Pure REST API)
   - 🛡️ Zero-Hardcoding: User-agnostic, privacy-first, dynamic credential storage
 ====================================================================================================
@@ -124,7 +124,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
     def __init__(self):
         super().__init__()
         
-        self.title("🏆 LinkedIn Certificate Harvester & GitHub Portfolio Architect Pro v12")
+        self.title("🏆 LinkedIn Certificate Harvester & GitHub Portfolio Architect Pro v12.5")
         self.geometry("1440x920")
         self.minsize(1150, 720)
         if hasattr(self, 'configure'):
@@ -136,7 +136,9 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         self.has_git = shutil.which("git") is not None
         self.has_gh = shutil.which("gh") is not None
         self.is_scraping = False
-        self.playwright_continue_event = asyncio.Event() if async_playwright else None
+        self.active_browser_page = None
+        self.active_browser_context = None
+        self.ready_to_scrape_event = threading.Event()
         
         # Grid layout
         self.grid_rowconfigure(0, weight=1)
@@ -148,7 +150,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         
         # Initial Logs
         self.log("SUCCESS", "LinkedIn Certificate Harvester & Portfolio Architect başlatıldı.")
-        self.log("INFO", f"Kalıcı Tarayıcı Profili: {BROWSER_PROFILE_DIR}")
+        self.log("INFO", f"Kalıcı Tarayıcı Oturumu: {BROWSER_PROFILE_DIR}")
         if self.has_git:
             self.log("INFO", "Git CLI: Sistem PATH'inde hazır.")
         else:
@@ -165,13 +167,17 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
             "output_dir": os.path.join(os.path.expanduser("~"), "LinkedIn_Portfolio_Export"),
             "profile_name": "Toprak Ahmet Aydoğmuş",
             "profile_headline": "Cybersecurity Specialist • Reverse Engineer • Systems Architect",
-            "linkedin_url": "https://www.linkedin.com/in/toprak-ahmet-aydo%C4%9Fmu%C5%9F-60462534b/",
+            "linkedin_url": "https://www.linkedin.com/in/toprak-ahmet-aydoğmuş-60462534b/",
             "theme_template": "Tokyo Night Cyberpunk"
         }
         if os.path.exists(CONFIG_FILE):
             try:
                 with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                    return {**default_cfg, **json.load(f)}
+                    cfg = {**default_cfg, **json.load(f)}
+                    # Sanitize if previous authwall text got saved
+                    if "Katılın" in cfg.get("profile_name", ""):
+                        cfg["profile_name"] = default_cfg["profile_name"]
+                    return cfg
             except Exception:
                 return default_cfg
         return default_cfg
@@ -312,70 +318,91 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
     def show_console_tab(self): self.switch_tab("console")
 
     # ==============================================================================================
-    # 🌐 TAB 1: LINKEDIN AI HARVESTER (MULTI-MODE EXTRACTION)
+    # 🌐 TAB 1: LINKEDIN AI HARVESTER (UNIFIED FLOW)
     # ==============================================================================================
     def create_harvester_view(self):
         frame = ctk.CTkFrame(self.main_container, fg_color=THEME["bg_card"], corner_radius=12)
-        frame.grid_rowconfigure(2, weight=1)
+        frame.grid_rowconfigure(3, weight=1)
         frame.grid_columnconfigure(0, weight=1)
         
-        # Scraper Input Card
-        ctrl = ctk.CTkFrame(frame, fg_color=THEME["bg_card_secondary"], corner_radius=8)
+        # Primary Action Card
+        ctrl = ctk.CTkFrame(frame, fg_color=THEME["bg_card_secondary"], corner_radius=10)
         ctrl.grid(row=0, column=0, sticky="ew", padx=12, pady=10)
         ctrl.grid_columnconfigure(1, weight=1)
         
-        ctk.CTkLabel(ctrl, text="🔗 LinkedIn Profil URL:", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, padx=10, pady=8, sticky="w")
+        ctk.CTkLabel(ctrl, text="🔗 LinkedIn Profil URL:", font=ctk.CTkFont(weight="bold")).grid(row=0, column=0, padx=12, pady=10, sticky="w")
         self.entry_linkedin_url = ctk.CTkEntry(ctrl, placeholder_text="https://www.linkedin.com/in/kullanici-adi/")
-        self.entry_linkedin_url.grid(row=0, column=1, padx=6, pady=8, sticky="ew")
+        self.entry_linkedin_url.grid(row=0, column=1, padx=6, pady=10, sticky="ew")
         self.entry_linkedin_url.insert(0, self.user_config.get("linkedin_url", ""))
         
-        # Action Buttons in Top Bar
-        top_btns = ctk.CTkFrame(ctrl, fg_color="transparent")
-        top_btns.grid(row=0, column=2, padx=6, pady=6)
-        
-        self.btn_scrape_persistent = ctk.CTkButton(
-            top_btns,
-            text="🚀 Kalıcı Chrome ile Çek (Oturum Hatırlamalı)",
-            fg_color=THEME["accent_green"],
-            text_color="#000",
-            hover_color="#00C853",
-            font=ctk.CTkFont(size=12, weight="bold"),
-            command=self.start_persistent_chrome_scrape
-        )
-        self.btn_scrape_persistent.pack(side="left", padx=4)
-        
-        self.btn_open_login_browser = ctk.CTkButton(
-            top_btns,
-            text="🔑 LinkedIn Oturumu Aç (1 Kez)",
-            fg_color=THEME["sidebar"],
-            hover_color=THEME["border"],
-            command=self.open_login_browser_window
-        )
-        self.btn_open_login_browser.pack(side="left", padx=4)
-        
-        # Secondary Action Bar (HTML Paste & Local Import)
-        sub_bar = ctk.CTkFrame(frame, fg_color=THEME["bg_card_secondary"], corner_radius=8)
-        sub_bar.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 10))
-        
-        btn_paste_html = ctk.CTkButton(
-            sub_bar,
-            text="📄 Kopyalanan LinkedIn HTML'ini Yapıştırarak Çek",
+        self.btn_launch_browser = ctk.CTkButton(
+            ctrl,
+            text="🚀 1. Tarayıcıyı Aç & LinkedIn'e Git",
             fg_color=THEME["accent_cyan"],
             text_color="#000",
             hover_color="#00B0FF",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self.start_interactive_browser
+        )
+        self.btn_launch_browser.grid(row=0, column=2, padx=10, pady=10)
+        
+        # Action Banner (Visible when browser is open)
+        self.banner_interactive = ctk.CTkFrame(frame, fg_color="#1F2937", corner_radius=10, border_width=1, border_color=THEME["accent_green"])
+        self.banner_interactive.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 10))
+        self.banner_interactive.grid_columnconfigure(0, weight=1)
+        
+        self.lbl_interactive_status = ctk.CTkLabel(
+            self.banner_interactive,
+            text="💡 Tarayıcı açıldığında LinkedIn hesabınıza giriş yapın veya profilinizde gezinin. Hazır olduğunuzda sağdaki butona basın!",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color=THEME["accent_cyan"]
+        )
+        self.lbl_interactive_status.grid(row=0, column=0, padx=14, pady=10, sticky="w")
+        
+        self.btn_scrape_now = ctk.CTkButton(
+            self.banner_interactive,
+            text="⚡ 2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK (HAZIRIM)",
+            fg_color=THEME["accent_green"],
+            text_color="#000",
+            hover_color="#00C853",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            height=38,
+            command=self.trigger_scrape_now
+        )
+        self.btn_scrape_now.grid(row=0, column=1, padx=14, pady=10)
+        
+        # Secondary Helpers Bar
+        sub_bar = ctk.CTkFrame(frame, fg_color=THEME["bg_card_secondary"], corner_radius=8)
+        sub_bar.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 10))
+        
+        btn_cdp_connect = ctk.CTkButton(
+            sub_bar,
+            text="🔗 Açık Chrome'a Bağlan (Port 9222 / CDP)",
+            fg_color=THEME["sidebar"],
+            hover_color=THEME["border"],
+            font=ctk.CTkFont(size=11, weight="bold"),
+            command=self.start_cdp_scrape
+        )
+        btn_cdp_connect.pack(side="left", padx=8, pady=8)
+        
+        btn_paste_html = ctk.CTkButton(
+            sub_bar,
+            text="📄 Kopyalanan LinkedIn HTML'ini Yapıştır (0.1sn)",
+            fg_color=THEME["sidebar"],
+            hover_color=THEME["border"],
             font=ctk.CTkFont(size=11, weight="bold"),
             command=self.open_html_paste_modal
         )
-        btn_paste_html.pack(side="left", padx=10, pady=8)
+        btn_paste_html.pack(side="left", padx=8, pady=8)
         
         btn_import_files = ctk.CTkButton(
             sub_bar,
-            text="📥 Yerel PDF / Görsellerden İçe Aktar",
+            text="📥 Yerel PDF / Görsellerden Aktar",
             fg_color=THEME["sidebar"],
             hover_color=THEME["border"],
             command=self.import_local_certificates
         )
-        btn_import_files.pack(side="left", padx=6, pady=8)
+        btn_import_files.pack(side="left", padx=8, pady=8)
         
         btn_manual_add = ctk.CTkButton(
             sub_bar,
@@ -388,45 +415,20 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         
         # Output Live View
         self.harvest_output = ctk.CTkTextbox(frame, font=("Consolas", 11), fg_color=THEME["bg_dark"])
-        self.harvest_output.grid(row=2, column=0, sticky="nsew", padx=12, pady=(0, 10))
-        self.harvest_output.insert("1.0", "🌐 LinkedIn Harvester v12 — Sıfır Giriş Engeli (Authwall Bypass):\n\n"
-                                          "1. 🚀 'Kalıcı Chrome ile Çek': Gerçek Chrome profilinizi kullanır. Bir kez giriş yapıldığında oturum kalıcı saklanır ve LinkedIn asla giriş istemez.\n"
-                                          "2. 📄 'Kopyalanan LinkedIn HTML'ini Yapıştır': LinkedIn profil sayfanızda sağ tık -> 'İncele' veya 'Kaynağı Görüntüle' yapıp HTML'i yapıştırdığınızda Playwright dahi olmadan 0.1 saniyede tüm sertifikaları, görselleri ve OCR'ı çıkarır.\n"
-                                          "3. 📥 'Yerel PDF / Görseller': Bilgisayarınızdaki mevcut sertifikaları doğrudan aktarır.")
+        self.harvest_output.grid(row=3, column=0, sticky="nsew", padx=12, pady=(0, 10))
+        self.harvest_output.insert("1.0", "🏆 LinkedIn AI Harvester v12.5 Hazır!\n\n"
+                                          "Nasıl Kullanılır:\n"
+                                          "1. '1. Tarayıcıyı Aç & LinkedIn'e Git' butonuna basın. (Gerçek Google Chrome oturumunuz açılır)\n"
+                                          "2. Açılan pencerede LinkedIn hesabınıza giriş yapın ve profilinize / sertifikalar sayfanıza gelin.\n"
+                                          "3. '2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK' butonuna basın!\n\n"
+                                          "Sistem tüm kartları aşağı kaydırarak bulacak, fotoğraflarını çekecek, Tesseract OCR ile tarayacak ve otomatik olarak README.md oluşturacaktır.")
         
         return frame
 
-    def open_login_browser_window(self):
-        url = "https://www.linkedin.com/login"
-        def run_thread():
-            self.log("INFO", "Kalıcı Chrome oturum penceresi açılıyor...")
-            self.harvest_output.insert("end", "\n🌐 Kalıcı Chrome oturum penceresi açıldı. Lütfen LinkedIn hesabınıza giriş yapın.\nGiriş yaptıktan sonra tarayıcıyı kapatabilirsiniz; oturumunuz otomatik olarak kaydedilecektir.\n")
-            try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(self.async_open_login_window())
-                loop.close()
-            except Exception as e:
-                self.log("ERROR", f"Tarayıcı açma hatası: {str(e)}")
-        threading.Thread(target=run_thread, daemon=True).start()
-
-    async def async_open_login_window(self):
-        if not async_playwright: return
-        async with async_playwright() as p:
-            context = await p.chromium.launch_persistent_context(
-                user_data_dir=BROWSER_PROFILE_DIR,
-                channel="chrome",
-                headless=False,
-                viewport={"width": 1280, "height": 800},
-                args=["--disable-blink-features=AutomationControlled"]
-            )
-            page = await context.new_page()
-            await page.goto("https://www.linkedin.com/login")
-            # Wait for user to navigate or close
-            while len(context.pages) > 0:
-                await asyncio.sleep(1)
-
-    def start_persistent_chrome_scrape(self):
+    # ----------------------------------------------------------------------------------------------
+    # 🚀 INTERACTIVE BROWSER SCRAPING FLOW
+    # ----------------------------------------------------------------------------------------------
+    def start_interactive_browser(self):
         url = self.entry_linkedin_url.get().strip()
         if not url.startswith("http"):
             messagebox.showerror("Hata", "Lütfen geçerli bir LinkedIn Profil URL'si giriniz.")
@@ -434,24 +436,27 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
             
         self.user_config["linkedin_url"] = url
         self.save_config()
+        self.ready_to_scrape_event.clear()
         
         def run_thread():
-            self.log("INFO", f"Kalıcı Chrome oturumu ile LinkedIn çekiliyor: {url}...")
+            self.log("INFO", f"Kalıcı Chrome oturumu açılıyor: {url}...")
             self.harvest_output.delete("1.0", "end")
-            self.harvest_output.insert("end", f"🚀 Kalıcı Google Chrome motoru başlatılıyor (Authwall Korumalı)...\nHedef: {url}\n\n")
+            self.harvest_output.insert("end", f"🚀 Google Chrome açılıyor...\nHedef: {url}\n\n"
+                                              f"👉 Lütfen açılan pencerede LinkedIn hesabınıza giriş yapın (varsa 2FA geçin).\n"
+                                              f"👉 Profilinize veya sertifikalar sayfanıza geldikten sonra yukarıdaki yeşil '2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK' butonuna tıklayın!\n\n")
             
             try:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-                loop.run_until_complete(self.async_scrape_persistent(url))
+                loop.run_until_complete(self.async_interactive_session(url))
                 loop.close()
             except Exception as e:
-                self.log("ERROR", f"Scraper hatası: {str(e)}")
-                self.harvest_output.insert("end", f"\n❌ Hata oluştu: {str(e)}\n(İpucu: Eğer tarayıcıda bir sekme takılırsa 'HTML Yapıştırarak Çek' seçeneğini kullanabilirsiniz)\n")
+                self.log("ERROR", f"Tarayıcı oturum hatası: {str(e)}")
+                self.harvest_output.insert("end", f"\n❌ Hata oluştu: {str(e)}\n")
                 
         threading.Thread(target=run_thread, daemon=True).start()
 
-    async def async_scrape_persistent(self, profile_url):
+    async def async_interactive_session(self, profile_url):
         if not async_playwright:
             self.harvest_output.insert("end", "❌ Playwright kütüphanesi eksik!\n")
             return
@@ -464,107 +469,223 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
                 viewport={"width": 1366, "height": 850},
                 args=["--disable-blink-features=AutomationControlled", "--start-maximized"]
             )
+            self.active_browser_context = context
             page = context.pages[0] if context.pages else await context.new_page()
+            self.active_browser_page = page
             
-            self.harvest_output.insert("end", "🌐 Sayfa açılıyor...\n")
-            await page.goto(profile_url, timeout=60000)
-            await asyncio.sleep(3)
-            
-            # Check if Authwall is shown
-            current_url = page.url
-            if "authwall" in current_url or "login" in current_url:
-                self.harvest_output.insert("end", "⚠️ LinkedIn giriş ekranı gösterdi. Lütfen açılan Chrome penceresinde 'Oturum Açın' veya hesabınıza giriş yapın.\nGiriş yaptığınızda sistem otomatik olarak algılayıp sertifikaları çekecektir!\n\n")
-                
-                # Wait until user logs in and url leaves authwall
-                for _ in range(60):
-                    await asyncio.sleep(2)
-                    if "authwall" not in page.url and "login" not in page.url:
-                        self.harvest_output.insert("end", "✅ Başarıyla giriş yapıldı! Taramaya devam ediliyor...\n")
-                        break
-                        
-            # Extract Profile Details
             try:
-                name_elem = await page.locator("h1").first.inner_text()
-                name = name_elem.strip() if name_elem else "Developer"
-            except Exception:
-                name = "Developer"
-                
-            try:
-                headline_elem = await page.locator("div.text-body-medium").first.inner_text()
-                headline = headline_elem.strip() if headline_elem else ""
-            except Exception:
-                headline = ""
-                
-            self.user_config["profile_name"] = name
-            self.user_config["profile_headline"] = headline
-            self.save_config()
-            
-            self.harvest_output.insert("end", f"👤 İsim: {name}\n💼 Başlık: {headline}\n\n📜 Sertifikalar taranıyor...\n")
-            
-            cert_url = profile_url.rstrip("/") + "/details/certifications/"
-            try:
-                await page.goto(cert_url, timeout=30000)
-                await asyncio.sleep(3)
+                await page.goto(profile_url, timeout=60000)
             except Exception:
                 pass
                 
-            for _ in range(3):
-                await page.mouse.wheel(0, 800)
-                await asyncio.sleep(1)
-                
-            cards = await page.locator("li.pvs-list__paged-list-item, div.display-flex.flex-column.full-width").all()
-            self.harvest_output.insert("end", f"📌 Bulunan sertifika kartı sayısı: {len(cards)}\n\n")
+            self.harvest_output.insert("end", "🟢 Tarayıcı hazır! Giriş yaptıktan sonra '2. ŞİMDİ EKRANDAKİ SERTİFİKALARI ÇEK' butonuna basın.\nBekleniyor...\n")
             
-            extracted_certs = []
-            for i, card in enumerate(cards[:25]):
-                try:
-                    title_elem = await card.locator("span[aria-hidden='true']").first.inner_text()
-                    title = title_elem.strip() if title_elem else f"Sertifika {i+1}"
-                except Exception:
-                    title = f"Sertifika {i+1}"
-                    
-                img_filename = f"cert_{int(time.time())}_{i+1}.png"
-                img_path = os.path.join(CERT_IMG_DIR, img_filename)
+            # Wait until user clicks "Şimdi Çek"
+            while not self.ready_to_scrape_event.is_set():
+                if len(context.pages) == 0:
+                    self.harvest_output.insert("end", "⚠️ Tarayıcı penceresi kapatıldı.\n")
+                    return
+                await asyncio.sleep(0.5)
                 
-                try:
-                    await card.screenshot(path=img_path)
-                except Exception:
-                    img_path = ""
-                    
-                ocr_text = ""
-                if img_path and pytesseract and os.path.exists(img_path):
-                    try:
-                        pil_img = Image.open(img_path)
-                        gray = ImageOps.grayscale(pil_img)
-                        enhanced = ImageEnhance.Contrast(gray).enhance(2.0)
-                        ocr_text = pytesseract.image_to_string(enhanced, lang="tur+eng").strip()
-                    except Exception:
-                        ocr_text = "OCR çözümleme yapılamadı."
-                        
-                cert_item = {
-                    "id": f"cert_{int(time.time())}_{i}",
-                    "title": title,
-                    "issuer": "LinkedIn Verified",
-                    "date": datetime.now().strftime("%Y"),
-                    "badge": "VERIFIED CREDENTIAL",
-                    "badge_color": "#00E5FF",
-                    "skills": ["Professional Skill"],
-                    "ocr_data": ocr_text,
-                    "img": img_path,
-                    "desc": ocr_text[:180].replace("\n", " ") if ocr_text else "LinkedIn üzerinden otomatik aktarıldı."
-                }
-                extracted_certs.append(cert_item)
-                self.harvest_output.insert("end", f"  ✅ [{i+1}] {title} kaydedildi (Görsel & OCR Hazır)\n")
-                
+            # EXECUTE SCRAPE
+            await self.async_do_scrape_page(page, profile_url)
             await context.close()
+            self.active_browser_page = None
+            self.active_browser_context = None
+
+    def trigger_scrape_now(self):
+        if self.active_browser_page is not None:
+            self.harvest_output.insert("end", "\n⚡ 'Şimdi Çek' tetiklendi! Sayfa taranıyor...\n")
+            self.ready_to_scrape_event.set()
+        else:
+            # Fallback if no browser opened: start and wait
+            self.start_interactive_browser()
+
+    async def async_do_scrape_page(self, page, profile_url):
+        self.harvest_output.insert("end", f"\n🔍 Aktif sayfa yakalandı: {page.url}\n")
+        
+        # 1. Extract Profile Name & Headline
+        name = "Toprak Ahmet Aydoğmuş"
+        headline = "Cybersecurity Specialist • Reverse Engineer • Systems Architect"
+        try:
+            h1_elem = await page.locator("h1").first.inner_text()
+            if h1_elem and "Katılın" not in h1_elem and "Giriş" not in h1_elem and "Sign" not in h1_elem:
+                name = h1_elem.strip()
+        except Exception:
+            pass
             
-            if extracted_certs:
-                self.certificates.extend(extracted_certs)
-                self.save_certificates_data()
-                self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
-                self.log("SUCCESS", f"{len(extracted_certs)} adet sertifika başarıyla emildi!")
-                messagebox.showinfo("Başarılı", f"{len(extracted_certs)} adet sertifika LinkedIn'den başarıyla çekildi!")
-                self.show_certs_tab()
+        try:
+            sub_elem = await page.locator("div.text-body-medium").first.inner_text()
+            if sub_elem and len(sub_elem) > 3:
+                headline = sub_elem.strip()
+        except Exception:
+            pass
+            
+        self.user_config["profile_name"] = name
+        self.user_config["profile_headline"] = headline
+        self.save_config()
+        self.harvest_output.insert("end", f"👤 İsim: {name}\n💼 Başlık: {headline}\n\n")
+        
+        # 2. Navigate to certifications if not already there
+        if "details/certifications" not in page.url:
+            cert_link = page.locator('a[href*="/details/certifications/"]')
+            if await cert_link.count() > 0:
+                self.harvest_output.insert("end", "🔗 'Tüm Sertifikaları Göster' linki tıklandı...\n")
+                try:
+                    await cert_link.first.click()
+                    await page.wait_for_load_state("networkidle")
+                    await asyncio.sleep(2)
+                except Exception:
+                    pass
+            else:
+                target_cert_url = profile_url.rstrip("/") + "/details/certifications/"
+                self.harvest_output.insert("end", f"🔗 Doğrudan sertifikalar sayfasına gidiliyor: {target_cert_url}...\n")
+                try:
+                    await page.goto(target_cert_url, timeout=30000)
+                    await asyncio.sleep(3)
+                except Exception:
+                    pass
+                    
+        # 3. Scroll Down to force lazy loaded images and cards
+        self.harvest_output.insert("end", "📜 Sayfa aşağı doğru taranıyor (Görsellerin yüklenmesi için)...\n")
+        for s in range(8):
+            await page.keyboard.press("PageDown")
+            await asyncio.sleep(1.2)
+        await page.keyboard.press("Home")
+        await asyncio.sleep(1)
+        
+        # 4. Extract Certification Cards
+        card_selectors = [
+            "li.pvs-list__paged-list-item",
+            "div.display-flex.flex-column.full-width",
+            "li.artdeco-list__item",
+            "div[data-view-name='profile-component-entity']",
+            "section[id*='certifications'] li"
+        ]
+        
+        cards = []
+        for sel in card_selectors:
+            matched = await page.locator(sel).all()
+            if len(matched) >= 2:
+                cards = matched
+                self.harvest_output.insert("end", f"📌 Seçici '{sel}' ile {len(cards)} adet kart yakalandı!\n")
+                break
+                
+        if not cards:
+            # Fallback to any entity item
+            cards = await page.locator("div.pvs-entity, li").all()
+            
+        self.harvest_output.insert("end", f"✨ İşlenecek toplam kart sayısı: {len(cards)}\n\n")
+        
+        extracted_certs = []
+        for i, card in enumerate(cards):
+            if i >= 35: break # limit to max 35
+            
+            try:
+                await card.scroll_into_view_if_needed()
+                await asyncio.sleep(0.4)
+            except Exception:
+                pass
+                
+            # Extract Spans
+            try:
+                spans = await card.locator("span[aria-hidden='true']").all_inner_texts()
+            except Exception:
+                spans = []
+                
+            if not spans:
+                try:
+                    raw_text = await card.inner_text()
+                    spans = [l.strip() for l in raw_text.split("\n") if l.strip()]
+                except Exception:
+                    continue
+                    
+            if not spans or len(spans[0].strip()) < 2:
+                continue
+                
+            title = spans[0].replace("\n", " ").strip()
+            # Filter out non-cert items
+            if any(bad in title.lower() for bad in ["ana sayfa", "mesajlar", "bildirimler", "iş ilanları", "ağım", "premium", "kaydol"]):
+                continue
+                
+            issuer = spans[1].replace("\n", " ").strip() if len(spans) > 1 else "Doğrulanmış Kurum"
+            date_str = spans[2].replace("\n", " ").strip() if len(spans) > 2 else datetime.now().strftime("%Y")
+            
+            # Screenshot Card
+            img_filename = f"linkedin_cert_{int(time.time())}_{i+1}.png"
+            img_path = os.path.join(CERT_IMG_DIR, img_filename)
+            try:
+                await card.screenshot(path=img_path)
+            except Exception:
+                img_path = ""
+                
+            # OCR Processing
+            ocr_text = ""
+            if img_path and os.path.exists(img_path) and pytesseract:
+                try:
+                    pil_img = Image.open(img_path)
+                    gray = ImageOps.grayscale(pil_img)
+                    enhanced = ImageEnhance.Contrast(gray).enhance(2.0)
+                    ocr_text = pytesseract.image_to_string(enhanced, lang="tur+eng").strip()
+                except Exception:
+                    ocr_text = f"{title} - {issuer}"
+                    
+            cert_item = {
+                "id": f"cert_{int(time.time())}_{i}",
+                "title": title,
+                "issuer": issuer,
+                "date": date_str,
+                "badge": "VERIFIED CREDENTIAL",
+                "badge_color": "#00E5FF",
+                "skills": ["Cybersecurity", "Professional"],
+                "ocr_data": ocr_text or f"{title}\n{issuer}\n{date_str}",
+                "img": img_path,
+                "desc": (ocr_text[:220].replace("\n", " ") if ocr_text else f"{issuer} tarafından verildi.")
+            }
+            extracted_certs.append(cert_item)
+            self.harvest_output.insert("end", f"  ✅ [{i+1}] {title} | {issuer} ({date_str})\n")
+            
+        if extracted_certs:
+            self.certificates.extend(extracted_certs)
+            self.save_certificates_data()
+            self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
+            self.log("SUCCESS", f"{len(extracted_certs)} adet sertifika başarıyla emildi!")
+            self.harvest_output.insert("end", f"\n🎉 İŞLEM TAMAMLANDI! {len(extracted_certs)} sertifika hafızaya kaydedildi.\n'📜 Sertifikalar & OCR Tablosu' sekmesine geçebilirsiniz.\n")
+            messagebox.showinfo("Başarılı", f"{len(extracted_certs)} adet sertifika başarıyla çekildi ve OCR ile okundu!")
+            self.show_certs_tab()
+        else:
+            self.harvest_output.insert("end", "⚠️ Belirgin sertifika kartı bulunamadı. Lütfen profilinizin 'Sertifikalar' sayfasında olduğunuzdan emin olun.\n")
+            messagebox.showwarning("Kart Bulunamadı", "Sertifikalar sayfasında olduğunuzdan emin olun veya 'HTML Yapıştırarak Çek' yöntemini deneyin.")
+
+    # ----------------------------------------------------------------------------------------------
+    # 🔗 CDP SCRAPER (PORT 9222)
+    # ----------------------------------------------------------------------------------------------
+    def start_cdp_scrape(self):
+        def run_thread():
+            self.log("INFO", "Açık Chrome oturumuna bağlanılıyor (Port 9222)...")
+            self.harvest_output.delete("1.0", "end")
+            self.harvest_output.insert("end", "🔗 Açık Chrome'a (Port 9222) bağlanılıyor...\n")
+            
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(self.async_cdp_scrape())
+                loop.close()
+            except Exception as e:
+                self.log("ERROR", f"CDP Bağlantı hatası: {str(e)}")
+                self.harvest_output.insert("end", f"\n❌ Port 9222 bağlantısı kurulamadı!\n"
+                                                  f"Chrome'u debug modunda açmak için terminalden şu komutu çalıştırabilirsiniz:\n"
+                                                  f'chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\\chrome-debug"\n\n'
+                                                  f"Veya yukarıdaki '1. Tarayıcıyı Aç & LinkedIn'e Git' butonunu kullanabilirsiniz.\n")
+        threading.Thread(target=run_thread, daemon=True).start()
+
+    async def async_cdp_scrape(self):
+        if not async_playwright: return
+        async with async_playwright() as p:
+            browser = await p.chromium.connect_over_cdp("http://localhost:9222")
+            context = browser.contexts[0]
+            page = context.pages[0]
+            await self.async_do_scrape_page(page, page.url)
 
     # ----------------------------------------------------------------------------------------------
     # 📄 DIRECT HTML PASTE MODAL (0 BOT DETECTION / 0.1 SECONDS)
@@ -578,7 +699,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         
         lbl_info = ctk.CTkLabel(
             modal,
-            text="Tarayıcınızda LinkedIn profil sayfanızdayken (veya Sertifikalar sayfasında):\nCtrl+U (veya İncele) yapıp HTML kodunu kopyalayın ve buraya yapıştırın.",
+            text="Tarayıcınızda LinkedIn sertifikalar sayfasındayken Ctrl+U (veya İncele) yapıp\nHTML kodunu kopyalayın ve buraya yapıştırın:",
             font=ctk.CTkFont(size=12),
             text_color=THEME["accent_cyan"]
         )
@@ -597,32 +718,35 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
             soup = BeautifulSoup(raw_html, "html.parser")
             found = 0
             
-            # Find certification items
-            items = soup.find_all(["li", "div"], class_=re.compile(r"pvs-list__paged-list-item|artdeco-list__item"))
+            items = soup.find_all(["li", "div"], class_=re.compile(r"pvs-list__paged-list-item|artdeco-list__item|pvs-entity"))
             if not items:
                 items = soup.find_all("div", class_=re.compile(r"display-flex flex-column"))
                 
             for i, it in enumerate(items):
                 text_content = it.get_text(separator=" ", strip=True)
-                if len(text_content) < 10 or "Sertifika" in text_content or "Lisans" in text_content or "Issued" in text_content:
-                    lines = [l.strip() for l in text_content.split("  ") if l.strip()]
-                    title = lines[0] if lines else f"Sertifika {found+1}"
+                if len(text_content) < 8: continue
+                lines = [l.strip() for l in text_content.split("  ") if len(l.strip()) > 2]
+                if not lines: continue
+                
+                title = lines[0]
+                if any(b in title.lower() for b in ["ana sayfa", "mesajlar", "bildirimler", "iş ilanları", "premium"]):
+                    continue
                     
-                    cert_item = {
-                        "id": f"cert_html_{int(time.time())}_{found}",
-                        "title": title,
-                        "issuer": lines[1] if len(lines) > 1 else "Doğrulanmış Kurum",
-                        "date": datetime.now().strftime("%Y"),
-                        "badge": "VERIFIED CREDENTIAL",
-                        "badge_color": "#00E5FF",
-                        "skills": ["Skill"],
-                        "ocr_data": text_content[:200],
-                        "img": "",
-                        "desc": text_content[:200]
-                    }
-                    self.certificates.append(cert_item)
-                    found += 1
-                    
+                cert_item = {
+                    "id": f"cert_html_{int(time.time())}_{found}",
+                    "title": title,
+                    "issuer": lines[1] if len(lines) > 1 else "Doğrulanmış Kurum",
+                    "date": lines[2] if len(lines) > 2 else datetime.now().strftime("%Y"),
+                    "badge": "VERIFIED CREDENTIAL",
+                    "badge_color": "#00E5FF",
+                    "skills": ["Skill"],
+                    "ocr_data": text_content[:250],
+                    "img": "",
+                    "desc": text_content[:250]
+                }
+                self.certificates.append(cert_item)
+                found += 1
+                
             self.save_certificates_data()
             self.lbl_cert_counter.configure(text=f"📜 Kayıtlı Sertifika: {len(self.certificates)}")
             modal.destroy()
@@ -702,7 +826,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         e_skills = ctk.CTkEntry(modal, width=480, placeholder_text="SIEM, Python, Wireshark")
         e_skills.pack(padx=20, pady=2)
         
-        ctk.CTkLabel(modal, text="Açıklama:").pack(anchor="w", padx=20, pady=(8, 2))
+        ctk.CTkLabel(modal, text="Açıklama / OCR:").pack(anchor="w", padx=20, pady=(8, 2))
         e_desc = ctk.CTkEntry(modal, width=480, placeholder_text="Sertifika kapsamı...")
         e_desc.pack(padx=20, pady=2)
         
@@ -765,7 +889,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         if not self.certificates:
             lbl_empty = ctk.CTkLabel(
                 self.scroll_certs,
-                text="Henüz kayıtlı sertifika bulunmamaktadır.\n'🌐 LinkedIn AI Harvester' sekmesinden otomatik çekebilir veya PDF/Görsel yükleyebilirsiniz.",
+                text="Henüz kayıtlı sertifika bulunmamaktadır.\n'🌐 LinkedIn AI Harvester' sekmesinden 'Tarayıcıyı Aç' ve 'Şimdi Çek' ile kolayca toplayabilirsiniz.",
                 font=ctk.CTkFont(size=13),
                 text_color=THEME["text_muted"]
             )
@@ -818,7 +942,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
             if cert.get("img") and os.path.exists(cert["img"]):
                 ctk.CTkButton(btn_row, text="🖼️ Görseli Aç", width=110, height=28, fg_color=THEME["sidebar"], command=lambda f=cert["img"]: os.startfile(f)).pack(side="left", padx=4)
                 
-            ctk.CTkButton(btn_row, text="📋 Markdown Kopyala", width=140, height=28, fg_color=THEME["sidebar"], command=lambda c=cert: [pyperclip.copy(f"### {c.get('title')}\n- {c.get('desc')}"), messagebox.showinfo("Kopyalandı", "Kart panoya kopyalandı!")]).pack(side="left", padx=4)
+            ctk.CTkButton(btn_row, text="📋 Markdown Kopyala", width=140, height=28, fg_color=THEME["sidebar"], command=lambda c=cert: [pyperclip.copy(f"### {c.get('title')}\n- Kurum: {c.get('issuer')}\n- Tarih: {c.get('date')}"), messagebox.showinfo("Kopyalandı", "Kart panoya kopyalandı!")]).pack(side="left", padx=4)
             ctk.CTkButton(btn_row, text="🗑️ Sil", width=60, height=28, fg_color="#3B1E1E", command=lambda i=idx: self.delete_cert(i)).pack(side="right", padx=4)
 
     def delete_cert(self, idx):
@@ -880,8 +1004,8 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         return frame
 
     def generate_and_preview_readme(self):
-        name = self.user_config.get("profile_name", "Developer").upper()
-        headline = self.user_config.get("profile_headline", "Cybersecurity & Systems Architect")
+        name = self.user_config.get("profile_name", "Toprak Ahmet Aydoğmuş").upper()
+        headline = self.user_config.get("profile_headline", "Cybersecurity Specialist • Reverse Engineer • Systems Architect")
         theme = self.combo_theme.get() if hasattr(self, 'combo_theme') else "Tokyo Night Cyberpunk"
         color_accent = "7aa2f7" if "Tokyo" in theme else ("00ffcc" if "Matrix" in theme else "0077b5")
         
@@ -894,24 +1018,28 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         lines.append(f"  <img src=\"https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=0:090d16,25:1a1b26,50:24283b,75:{color_accent},100:bb9af7&height=240&section=header&text={urllib.parse.quote(name)}&fontSize=42&fontColor=ffffff&animation=fadeIn\" width=\"100%\" alt=\"Header Banner\" />")
         lines.append("</a>\n")
         lines.append(f"### *{headline}*\n")
-        lines.append(f"![Sertifikalar](https://img.shields.io/badge/Do%C4%9Frulanm%C4%B1%C5%9F_Sertifikalar-{len(self.certificates)}-{color_accent}?style=for-the-badge&logo=shield&logoColor=white)")
+        lines.append(f"![Sertifikalar](https://img.shields.io/badge/Sertifikalar-{len(self.certificates)}-{color_accent}?style=for-the-badge&logo=linkedin&logoColor=white)")
         lines.append("</div>\n\n---\n")
-        lines.append("## 📜 Doğrulanmış Sertifikalar ve Akreditasyonlar\n")
-        lines.append("| 🖼️ Sertifika & Belge | ℹ️ Detaylar, Kurum & OCR Verisi | 🛡️ Doğrulama |")
-        lines.append("| :--- | :--- | :---: |")
+        lines.append("## 📜 Başarılar, Lisanslar ve Sertifikalar\n")
+        lines.append("| 🖼️ Sertifika Görseli | ℹ️ Detaylar & OCR Verisi |")
+        lines.append("| :--- | :--- |")
         
         for c in self.certificates:
             t = c.get("title", "Sertifika")
-            iss = c.get("issuer", "-")
+            iss = c.get("issuer", "Doğrulanmış Kurum")
             dt = c.get("date", "-")
-            desc = c.get("desc", c.get("ocr_data", ""))
-            badge = c.get("badge", "VERIFIED")
-            img_tag = f"📄 `{os.path.basename(c.get('img', ''))}`" if c.get("img") else "🏛️ Belge Kayıtlı"
-            lines.append(f"| **{t}**<br/>{img_tag} | **Kurum:** `{iss}`<br/>**Tarih:** `{dt}`<br/>_{desc[:160]}_ | `[{badge}]` |")
+            ocr = c.get("ocr_data", "").replace("\n", "<br>").replace("|", "-").strip()
+            if not ocr: ocr = "_Metin bulunamadı._"
+            
+            img_rel = f"assets/certificates/{os.path.basename(c.get('img', ''))}" if c.get("img") else ""
+            img_html = f"<img src=\"{img_rel}\" width=\"350\" style=\"border-radius:8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);\">" if img_rel else "🏛️ **Doğrulanmış Belge**"
+            
+            detail_html = f"**{t}** <br><br> **🏛️ Kurum:** `{iss}` <br> **📅 Tarih:** `{dt}` <br><br> <details><summary>🔍 <b>OCR İçeriğini Göster</b></summary><br> <blockquote>{ocr}</blockquote> </details>"
+            lines.append(f"| {img_html} | {detail_html} |")
             
         lines.append("\n---\n")
         lines.append("<div align=\"center\">\n")
-        lines.append("<sub>⚡ Generated with LinkedIn Certificate Harvester & Portfolio Architect Pro</sub>\n")
+        lines.append("*🤖 Bu portfolyo [LinkedIn Certificate Harvester & Portfolio Architect Pro] ile otomatik oluşturulmuştur.*\n")
         lines.append("</div>")
         
         full_md = "\n".join(lines)
@@ -1198,7 +1326,7 @@ class LinkedInCertArchitectSuite(ctk.CTk if hasattr(ctk, 'CTk') else tk.Tk):
         ctk.CTkLabel(card, text="Profil Adınız:").grid(row=0, column=0, padx=12, pady=10, sticky="w")
         self.entry_set_name = ctk.CTkEntry(card)
         self.entry_set_name.grid(row=0, column=1, padx=12, pady=10, sticky="ew")
-        self.entry_set_name.insert(0, self.user_config.get("profile_name", "Developer"))
+        self.entry_set_name.insert(0, self.user_config.get("profile_name", "Toprak Ahmet Aydoğmuş"))
         
         ctk.CTkLabel(card, text="Profil Unvanı:").grid(row=1, column=0, padx=12, pady=10, sticky="w")
         self.entry_set_headline = ctk.CTkEntry(card)
