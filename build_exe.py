@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import shutil
+import tempfile
 
 if sys.stdout.encoding != 'utf-8':
     try:
@@ -13,6 +14,7 @@ def build():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     app_py = os.path.join(base_dir, "app.py")
     ico_path = os.path.join(base_dir, "assets", "logo.ico")
+    temp_work = os.path.join(tempfile.gettempdir(), "pyinstaller_linkedin_build")
     
     cmd = [
         sys.executable, "-m", "PyInstaller",
@@ -21,6 +23,7 @@ def build():
         "--clean",
         "--name=LinkedInCertArchitectPro",
         f"--icon={ico_path}",
+        f"--workpath={temp_work}",
         "--collect-all=customtkinter",
         f"--add-data={os.path.join(base_dir, 'assets')};assets",
         "--exclude-module=torch",
@@ -34,7 +37,7 @@ def build():
         app_py
     ]
     
-    print("Building lightweight executable...")
+    print("Building lightweight executable with isolated temp workpath...")
     res = subprocess.run(cmd, cwd=base_dir)
     if res.returncode == 0:
         exe_path = os.path.join(base_dir, "dist", "LinkedInCertArchitectPro.exe")
